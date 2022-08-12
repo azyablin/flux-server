@@ -1,0 +1,46 @@
+server:
+  port: 8095
+
+spring:
+  rsocket:
+    server:
+      transport: websocket
+      mapping-path: /rsocket
+      port: 8096
+  h2:
+    console:
+      enabled: true
+  application:
+    name: customer
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+    driver-class-name: ${DB_DRIVER_CLASS_NAME}
+    hikari:
+      minimumIdle: ${DB_POOL_MINIMUM_IDLE}
+      maximumPoolSize: ${DB_POOL_MAXIMUM_POOL_SIZE}
+      idleTimeout: ${DB_POOL_IDLE_TIMEOUT}
+  jpa:
+    database-platform: ${DB_PLATFORM}
+    show-sql: true
+    properties:
+      hibernate:
+        globally_quoted_identifiers: true
+        jdbc:
+          lob:
+            non_contextual_creation: true
+    hibernate:
+      ddl-auto: create
+    open-in-view: true
+  jackson:
+    default-property-inclusion: non_absent
+
+DB_URL: jdbc:h2:mem:testdb
+DB_USER: sa
+DB_PASSWORD: password
+DB_POOL_MINIMUM_IDLE: 2
+DB_POOL_MAXIMUM_POOL_SIZE: 10
+DB_POOL_IDLE_TIMEOUT: 60000
+DB_PLATFORM: org.hibernate.dialect.H2Dialect
+DB_DRIVER_CLASS_NAME: org.h2.Driver
