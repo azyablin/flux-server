@@ -1,30 +1,32 @@
 package com.magnit.flux.dao;
 
 import java.util.Optional;
-import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
+import lombok.RequiredArgsConstructor;
 import lombok.val;
-import org.hibernate.Session;
+import org.hibernate.SessionFactory;
 import org.hibernate.StatelessSession;
+import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-
+@Component
+@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
+@RequiredArgsConstructor
 public class StreamResultProducer<T> {
 
-    private EntityManagerFactory entityManagerFactory;
-
-    private EntityManager entityManager;
+    private final EntityManagerFactory entityManagerFactory;
 
     private StatelessSession statelessSession;
 
     public Flux<T> execute(String qlString, Class<T> resultClass) {
-        Optional.ofNullable(entityManager).ifPresent(e -> {
+        Optional.ofNullable(statelessSession).ifPresent(e -> {
             throw new RuntimeException("Cursor already open");
         });
-        entityManager = entityManagerFactory.createEntityManager();
-        statelessSession = entityManager.unwrap(Session.class).getSessionFactory()
-            .openStatelessSession();
+        val sessionFactory = entityManagerFactory.unwrap(SessionFactory.class);
+        statelessSession = sessionFactory.openStatelessSession();
         statelessSession.getTransaction().begin();
         val query = statelessSession.createQuery(qlString, resultClass);
         return Flux.fromStream(query.getResultStream());
@@ -39,10 +41,7 @@ public class StreamResultProducer<T> {
     }
 
     public Mono<Void> close(boolean commitTran) {
-        if (!entityManager.isOpen()) {
-            return Mono.empty();
-        }
-        if (entityManager.getTransaction().isActive()) {
+        if (statelessSession.getTransaction().isActive()) {
             if (commitTran) {
                 statelessSession.getTransaction().commit();
             } else {
@@ -51,22 +50,8 @@ public class StreamResultProducer<T> {
 
         }
         statelessSession.close();
-        entityManager.close();
         return Mono.empty();
     }
 
-    public static <T> Mono<StreamResultProducer<T>> getInstance(
-        EntityManagerFactory entityManagerFactory) {
-        return Mono.just(new StreamResultProducer(entityManagerFactory));
-    }
-
-    private StreamResultProducer(EntityManagerFactory entityManagerFactory) {
-        this.entityManagerFactory = entityManagerFactory;
-
-    }
-
-    private StreamResultProducer() {
-
-    }
 
 }

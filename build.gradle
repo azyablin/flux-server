@@ -30,9 +30,6 @@ dependencies {
     testImplementation 'io.projectreactor:reactor-test'
 }
 
-tasks.named('test') {
-    useJUnitPlatform()
-}
 
 task browserify(type: Exec) {
     workingDir "${project.projectDir.toString()}/src/main/resources/static/"
