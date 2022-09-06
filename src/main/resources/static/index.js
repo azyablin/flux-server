@@ -63,6 +63,7 @@ client.connect().subscribe({
                 document.getElementById(
                     "operation").innerText = "Operation ID: "
                     + value.data.id + ". Customer: " + value.data.customer.name;
+                //Управление обратным давлением вручную. Можно поставить на паузу (функция pause), можно возобновить чтение(функция suspend)
                 if (!paused) {
                     subscription.request(1);
                 }
